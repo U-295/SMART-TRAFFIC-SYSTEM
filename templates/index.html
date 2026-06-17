@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Traffic Management System</title>
+    <!-- Modern Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="app-header">
+        <h1>Smart Traffic Management System</h1>
+        <p>AI-powered dynamic traffic routing & analytics</p>
+    </header>
+
+    <main class="dashboard">
+        <!-- Analytics Top Bar -->
+        <section class="analytics-bar">
+            <div class="stat-card">
+                <h3>Total Vehicles Today</h3>
+                <p id="total-vehicles">--</p>
+            </div>
+            <div class="stat-card">
+                <h3>Peak Traffic Hour</h3>
+                <p id="peak-hour">--</p>
+            </div>
+        </section>
+
+        <!-- Intersection Layout -->
+        <section class="intersection">
+            <div class="lane" id="lane-1">
+                <h2>North Lane</h2>
+                
+                <div class="signal-box">
+                    <div class="light red active" id="light-red-1"></div>
+                    <div class="light yellow" id="light-yellow-1"></div>
+                    <div class="light green" id="light-green-1"></div>
+                </div>
+                
+                <div class="timer" id="timer-1">00</div>
+                <div class="density-label" id="density-1">Density: --</div>
+
+                <div class="controls">
+                    <label>Vehicle Count:</label>
+                    <div class="input-group">
+                        <input type="number" id="count-1" min="0" placeholder="0">
+                        <button onclick="updateDensity(1)" class="btn-update">Update</button>
+                    </div>
+                    <button onclick="triggerEmergency(1)" class="btn-emergency">🚨 Emergency Priority</button>
+                </div>
+            </div>
+
+            <div class="lane" id="lane-2">
+                <h2>South Lane</h2>
+                
+                <div class="signal-box">
+                    <div class="light red active" id="light-red-2"></div>
+                    <div class="light yellow" id="light-yellow-2"></div>
+                    <div class="light green" id="light-green-2"></div>
+                </div>
+                
+                <div class="timer" id="timer-2">00</div>
+                <div class="density-label" id="density-2">Density: --</div>
+
+                <div class="controls">
+                    <label>Vehicle Count:</label>
+                    <div class="input-group">
+                        <input type="number" id="count-2" min="0" placeholder="0">
+                        <button onclick="updateDensity(2)" class="btn-update">Update</button>
+                    </div>
+                    <button onclick="triggerEmergency(2)" class="btn-emergency">🚨 Emergency Priority</button>
+                </div>
+            </div>
+
+            <div class="lane" id="lane-3">
+                <h2>East Lane</h2>
+                
+                <div class="signal-box">
+                    <div class="light red active" id="light-red-3"></div>
+                    <div class="light yellow" id="light-yellow-3"></div>
+                    <div class="light green" id="light-green-3"></div>
+                </div>
+                
+                <div class="timer" id="timer-3">00</div>
+                <div class="density-label" id="density-3">Density: --</div>
+
+                <div class="controls">
+                    <label>Vehicle Count:</label>
+                    <div class="input-group">
+                        <input type="number" id="count-3" min="0" placeholder="0">
+                        <button onclick="updateDensity(3)" class="btn-update">Update</button>
+                    </div>
+                    <button onclick="triggerEmergency(3)" class="btn-emergency">🚨 Emergency Priority</button>
+                </div>
+            </div>
+
+            <div class="lane" id="lane-4">
+                <h2>West Lane</h2>
+                
+                <div class="signal-box">
+                    <div class="light red active" id="light-red-4"></div>
+                    <div class="light yellow" id="light-yellow-4"></div>
+                    <div class="light green" id="light-green-4"></div>
+                </div>
+                
+                <div class="timer" id="timer-4">00</div>
+                <div class="density-label" id="density-4">Density: --</div>
+
+                <div class="controls">
+                    <label>Vehicle Count:</label>
+                    <div class="input-group">
+                        <input type="number" id="count-4" min="0" placeholder="0">
+                        <button onclick="updateDensity(4)" class="btn-update">Update</button>
+                    </div>
+                    <button onclick="triggerEmergency(4)" class="btn-emergency">🚨 Emergency Priority</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Hourly Traffic Table -->
+        <section class="analytics-table-container">
+            <h3>Hourly Traffic Logs Today</h3>
+            <table class="analytics-table">
+                <thead>
+                    <tr>
+                        <th>Hour of Day</th>
+                        <th>Total Volume</th>
+                    </tr>
+                </thead>
+                <tbody id="hourly-table-body">
+                    <!-- Data populated via JS -->
+                </tbody>
+            </table>
+        </section>
+
+    </main>
+
+    <!-- JS for Logic -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
