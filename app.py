@@ -202,6 +202,31 @@ def get_status():
 
     return jsonify(analytics)
 
+@app.route('/api/emergency_history', methods=['GET'])
+def get_emergency_history():
+    """
+    Fetches the recent emergency logs with lane names.
+    """
+    conn = get_db_connection()
+    logs = []
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT e.id, datetime(e.triggered_at, 'localtime') as triggered_at, l.name as lane_name
+                FROM emergency_logs e
+                JOIN lanes l ON e.lane_id = l.id
+                ORDER BY e.triggered_at DESC
+                LIMIT 10
+            """)
+            rows = cursor.fetchall()
+            logs = [dict(row) for row in rows]
+        except Exception as e:
+            print(f"Error fetching emergency logs: {e}")
+        finally:
+            conn.close()
+    return jsonify(logs)
+
 if __name__ == '__main__':
     init_db()
     app.run(debug=True)

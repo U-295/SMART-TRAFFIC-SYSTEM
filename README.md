@@ -63,3 +63,10 @@ To help you defend your project, here is a simple explanation of how the major p
   - `setInterval` is used to create the countdown loop that runs every 1 second. 
   - When the timer hits 0, `switchToNextLane()` changes the active lane. 
   - `fetch()` is used to communicate with the Python backend without having to reload the page (this is called AJAX).
+
+---
+
+## 👥 Contributors
+
+- **Dushyanth136** - Core Developer & System Designer
+

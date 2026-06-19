@@ -4,136 +4,241 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Traffic Management System</title>
-    <!-- Modern Google Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- Google Font: Outfit -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+    <!-- Premium background glowing blur blobs -->
+    <div class="glow-bg-blob glow-blob-1"></div>
+    <div class="glow-bg-blob glow-blob-2"></div>
+
     <header class="app-header">
-        <h1>Smart Traffic Management System</h1>
-        <p>AI-powered dynamic traffic routing & analytics</p>
+        <div class="header-content">
+            <div class="logo-area">
+                <span class="badge">Live System</span>
+                <h1>Smart Traffic Management System</h1>
+                <p>Dynamic signal optimization & predictive traffic routing dashboard</p>
+            </div>
+            <div class="simulation-control">
+                <div class="sim-text-group">
+                    <span class="sim-title">Auto Simulation</span>
+                    <span class="sim-subtitle" id="sim-status-label">Inactive</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="simulation-toggle">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
     </header>
 
-    <main class="dashboard">
-        <!-- Analytics Top Bar -->
-        <section class="analytics-bar">
+    <main class="dashboard-wrapper">
+        <!-- Stats Row -->
+        <section class="stats-row">
             <div class="stat-card">
-                <h3>Total Vehicles Today</h3>
-                <p id="total-vehicles">--</p>
+                <div class="stat-icon-wrapper blue">
+                    <span class="icon">🚗</span>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-label">Total Vehicles Today</span>
+                    <p class="stat-val" id="total-vehicles">0</p>
+                </div>
             </div>
             <div class="stat-card">
-                <h3>Peak Traffic Hour</h3>
-                <p id="peak-hour">--</p>
-            </div>
-        </section>
-
-        <!-- Intersection Layout -->
-        <section class="intersection">
-            <div class="lane" id="lane-1">
-                <h2>North Lane</h2>
-                
-                <div class="signal-box">
-                    <div class="light red active" id="light-red-1"></div>
-                    <div class="light yellow" id="light-yellow-1"></div>
-                    <div class="light green" id="light-green-1"></div>
+                <div class="stat-icon-wrapper green">
+                    <span class="icon">📈</span>
                 </div>
-                
-                <div class="timer" id="timer-1">00</div>
-                <div class="density-label" id="density-1">Density: --</div>
-
-                <div class="controls">
-                    <label>Vehicle Count:</label>
-                    <div class="input-group">
-                        <input type="number" id="count-1" min="0" placeholder="0">
-                        <button onclick="updateDensity(1)" class="btn-update">Update</button>
-                    </div>
-                    <button onclick="triggerEmergency(1)" class="btn-emergency">🚨 Emergency Priority</button>
+                <div class="stat-info">
+                    <span class="stat-label">Peak Traffic Hour</span>
+                    <p class="stat-val" id="peak-hour">N/A</p>
                 </div>
             </div>
-
-            <div class="lane" id="lane-2">
-                <h2>South Lane</h2>
-                
-                <div class="signal-box">
-                    <div class="light red active" id="light-red-2"></div>
-                    <div class="light yellow" id="light-yellow-2"></div>
-                    <div class="light green" id="light-green-2"></div>
+            <div class="stat-card">
+                <div class="stat-icon-wrapper red">
+                    <span class="icon">🚨</span>
                 </div>
-                
-                <div class="timer" id="timer-2">00</div>
-                <div class="density-label" id="density-2">Density: --</div>
-
-                <div class="controls">
-                    <label>Vehicle Count:</label>
-                    <div class="input-group">
-                        <input type="number" id="count-2" min="0" placeholder="0">
-                        <button onclick="updateDensity(2)" class="btn-update">Update</button>
-                    </div>
-                    <button onclick="triggerEmergency(2)" class="btn-emergency">🚨 Emergency Priority</button>
+                <div class="stat-info">
+                    <span class="stat-label">Emergency Overrides</span>
+                    <p class="stat-val" id="emergency-count">0</p>
                 </div>
             </div>
-
-            <div class="lane" id="lane-3">
-                <h2>East Lane</h2>
-                
-                <div class="signal-box">
-                    <div class="light red active" id="light-red-3"></div>
-                    <div class="light yellow" id="light-yellow-3"></div>
-                    <div class="light green" id="light-green-3"></div>
+            <div class="stat-card">
+                <div class="stat-icon-wrapper yellow">
+                    <span class="icon">⚙️</span>
                 </div>
-                
-                <div class="timer" id="timer-3">00</div>
-                <div class="density-label" id="density-3">Density: --</div>
-
-                <div class="controls">
-                    <label>Vehicle Count:</label>
-                    <div class="input-group">
-                        <input type="number" id="count-3" min="0" placeholder="0">
-                        <button onclick="updateDensity(3)" class="btn-update">Update</button>
-                    </div>
-                    <button onclick="triggerEmergency(3)" class="btn-emergency">🚨 Emergency Priority</button>
-                </div>
-            </div>
-
-            <div class="lane" id="lane-4">
-                <h2>West Lane</h2>
-                
-                <div class="signal-box">
-                    <div class="light red active" id="light-red-4"></div>
-                    <div class="light yellow" id="light-yellow-4"></div>
-                    <div class="light green" id="light-green-4"></div>
-                </div>
-                
-                <div class="timer" id="timer-4">00</div>
-                <div class="density-label" id="density-4">Density: --</div>
-
-                <div class="controls">
-                    <label>Vehicle Count:</label>
-                    <div class="input-group">
-                        <input type="number" id="count-4" min="0" placeholder="0">
-                        <button onclick="updateDensity(4)" class="btn-update">Update</button>
-                    </div>
-                    <button onclick="triggerEmergency(4)" class="btn-emergency">🚨 Emergency Priority</button>
+                <div class="stat-info">
+                    <span class="stat-label">Active Lane Signal</span>
+                    <p class="stat-val" id="active-lane-indicator">North Lane</p>
                 </div>
             </div>
         </section>
 
-        <!-- Hourly Traffic Table -->
-        <section class="analytics-table-container">
-            <h3>Hourly Traffic Logs Today</h3>
-            <table class="analytics-table">
-                <thead>
-                    <tr>
-                        <th>Hour of Day</th>
-                        <th>Total Volume</th>
-                    </tr>
-                </thead>
-                <tbody id="hourly-table-body">
-                    <!-- Data populated via JS -->
-                </tbody>
-            </table>
-        </section>
+        <!-- Main Dashboard Content Grid -->
+        <div class="dashboard-grid">
+            <!-- Left Side: Intersection Control -->
+            <section class="intersection-section">
+                <div class="section-header">
+                    <h2>Intersection Monitor</h2>
+                    <span class="section-desc">Real-time status & manual vehicle injection</span>
+                </div>
+                
+                <div class="intersection-layout">
+                    <!-- Lane 1 (North) -->
+                    <div class="lane-card" id="lane-1">
+                        <div class="lane-header">
+                            <span class="lane-direction">North Lane</span>
+                            <div class="status-indicator" id="status-ind-1"></div>
+                        </div>
+                        <div class="lane-body">
+                            <div class="signal-box">
+                                <div class="light red active" id="light-red-1"></div>
+                                <div class="light yellow" id="light-yellow-1"></div>
+                                <div class="light green" id="light-green-1"></div>
+                            </div>
+                            <div class="timer-wrapper">
+                                <div class="timer" id="timer-1">00</div>
+                                <div class="density-label" id="density-1">Density: --</div>
+                            </div>
+                        </div>
+                        <div class="lane-controls">
+                            <div class="input-row">
+                                <input type="number" id="count-1" min="0" placeholder="Vehicles">
+                                <button onclick="updateDensity(1)" class="btn-update">Update</button>
+                            </div>
+                            <button onclick="triggerEmergency(1)" class="btn-emergency">🚨 Emergency Priority</button>
+                        </div>
+                    </div>
 
+                    <!-- Lane 2 (South) -->
+                    <div class="lane-card" id="lane-2">
+                        <div class="lane-header">
+                            <span class="lane-direction">South Lane</span>
+                            <div class="status-indicator" id="status-ind-2"></div>
+                        </div>
+                        <div class="lane-body">
+                            <div class="signal-box">
+                                <div class="light red active" id="light-red-2"></div>
+                                <div class="light yellow" id="light-yellow-2"></div>
+                                <div class="light green" id="light-green-2"></div>
+                            </div>
+                            <div class="timer-wrapper">
+                                <div class="timer" id="timer-2">00</div>
+                                <div class="density-label" id="density-2">Density: --</div>
+                            </div>
+                        </div>
+                        <div class="lane-controls">
+                            <div class="input-row">
+                                <input type="number" id="count-2" min="0" placeholder="Vehicles">
+                                <button onclick="updateDensity(2)" class="btn-update">Update</button>
+                            </div>
+                            <button onclick="triggerEmergency(2)" class="btn-emergency">🚨 Emergency Priority</button>
+                        </div>
+                    </div>
+
+                    <!-- Lane 3 (East) -->
+                    <div class="lane-card" id="lane-3">
+                        <div class="lane-header">
+                            <span class="lane-direction">East Lane</span>
+                            <div class="status-indicator" id="status-ind-3"></div>
+                        </div>
+                        <div class="lane-body">
+                            <div class="signal-box">
+                                <div class="light red active" id="light-red-3"></div>
+                                <div class="light yellow" id="light-yellow-3"></div>
+                                <div class="light green" id="light-green-3"></div>
+                            </div>
+                            <div class="timer-wrapper">
+                                <div class="timer" id="timer-3">00</div>
+                                <div class="density-label" id="density-3">Density: --</div>
+                            </div>
+                        </div>
+                        <div class="lane-controls">
+                            <div class="input-row">
+                                <input type="number" id="count-3" min="0" placeholder="Vehicles">
+                                <button onclick="updateDensity(3)" class="btn-update">Update</button>
+                            </div>
+                            <button onclick="triggerEmergency(3)" class="btn-emergency">🚨 Emergency Priority</button>
+                        </div>
+                    </div>
+
+                    <!-- Lane 4 (West) -->
+                    <div class="lane-card" id="lane-4">
+                        <div class="lane-header">
+                            <span class="lane-direction">West Lane</span>
+                            <div class="status-indicator" id="status-ind-4"></div>
+                        </div>
+                        <div class="lane-body">
+                            <div class="signal-box">
+                                <div class="light red active" id="light-red-4"></div>
+                                <div class="light yellow" id="light-yellow-4"></div>
+                                <div class="light green" id="light-green-4"></div>
+                            </div>
+                            <div class="timer-wrapper">
+                                <div class="timer" id="timer-4">00</div>
+                                <div class="density-label" id="density-4">Density: --</div>
+                            </div>
+                        </div>
+                        <div class="lane-controls">
+                            <div class="input-row">
+                                <input type="number" id="count-4" min="0" placeholder="Vehicles">
+                                <button onclick="updateDensity(4)" class="btn-update">Update</button>
+                            </div>
+                            <button onclick="triggerEmergency(4)" class="btn-emergency">🚨 Emergency Priority</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Side: Analytics & Logs -->
+            <section class="analytics-section">
+                <div class="glass-card chart-card">
+                    <div class="card-header">
+                        <h3>Traffic Flow Density</h3>
+                        <span class="sub">Hourly aggregated vehicle volume</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="trafficChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="analytics-subgrid">
+                    <!-- Hourly Data Table -->
+                    <div class="glass-card table-card">
+                        <div class="card-header">
+                            <h3>Logs Today</h3>
+                        </div>
+                        <div class="table-wrapper">
+                            <table class="analytics-table">
+                                <thead>
+                                    <tr>
+                                        <th>Hour</th>
+                                        <th>Traffic Volume</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="hourly-table-body">
+                                    <!-- Populated via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Emergency Log History -->
+                    <div class="glass-card logs-card">
+                        <div class="card-header">
+                            <h3>Emergency Events</h3>
+                        </div>
+                        <div class="logs-wrapper">
+                            <ul class="logs-list" id="emergency-logs-list">
+                                <!-- Populated via JS -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
     </main>
 
     <!-- JS for Logic -->
