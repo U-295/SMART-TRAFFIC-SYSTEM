@@ -238,7 +238,7 @@ def set_setting(key, value):
             conn.close()
     return False
 
-def add_pedestrian_request(lane_id):
+def add_pedestrian_request(lane_id: int) -> bool:
     """Inserts a new pedestrian crossing request log."""
     conn = get_db_connection()
     if conn:
