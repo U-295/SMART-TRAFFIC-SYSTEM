@@ -49,6 +49,15 @@ def init_db():
     """)
     
     cursor.execute("""
+    CREATE TABLE IF NOT EXISTS pedestrian_requests (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        lane_id INTEGER NOT NULL,
+        requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (lane_id) REFERENCES lanes(id)
+    )
+    """)
+
+    cursor.execute("""
     CREATE TABLE IF NOT EXISTS system_settings (
         key TEXT PRIMARY KEY,
         value TEXT NOT NULL
@@ -216,6 +225,22 @@ def set_setting(key, value):
             return True
         except Exception as e:
             print(f"Error setting setting {key}: {e}")
+            return False
+        finally:
+            conn.close()
+    return False
+
+def add_pedestrian_request(lane_id):
+    """Inserts a new pedestrian crossing request log."""
+    conn = get_db_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO pedestrian_requests (lane_id) VALUES (?)", (lane_id,))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error saving pedestrian request log: {e}")
             return False
         finally:
             conn.close()
