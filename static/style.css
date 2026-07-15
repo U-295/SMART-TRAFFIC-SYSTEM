@@ -746,3 +746,39 @@ input:checked + .slider:before {
     color: var(--accent-blue);
     box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
 }
+
+/* Priority controls row */
+.btn-priority-row {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+}
+
+.btn-priority-row button {
+    flex: 1;
+}
+
+/* Pedestrian button */
+.btn-pedestrian {
+    background: transparent;
+    color: var(--accent-green);
+    border: 1.5px solid var(--accent-green);
+    border-radius: 8px;
+    padding: 10px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s, box-shadow 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.btn-pedestrian:hover {
+    background-color: var(--accent-green);
+    color: white;
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.35);
+}
