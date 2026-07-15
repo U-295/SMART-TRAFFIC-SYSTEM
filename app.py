@@ -78,6 +78,23 @@ def get_emergency_history():
     logs = database.get_emergency_history_logs()
     return jsonify(logs)
 
+@app.route('/api/weather', methods=['GET', 'POST'])
+def handle_weather():
+    """
+    GET: Returns current system weather.
+    POST: Updates system weather and adjusts timing.
+    """
+    if request.method == 'POST':
+        data = request.json
+        weather = data.get('weather', 'Clear')
+        if weather in config.WEATHER_MULTIPLIERS:
+            database.set_setting('weather', weather)
+            return jsonify({'status': 'success', 'weather': weather})
+        return jsonify({'status': 'error', 'message': 'Invalid weather condition'}), 400
+    
+    weather = database.get_setting('weather', 'Clear')
+    return jsonify({'weather': weather})
+
 if __name__ == '__main__':
     database.init_db()
     app.run(debug=True)
