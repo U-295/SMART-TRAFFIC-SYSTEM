@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 from datetime import datetime
 import database
+import config
 
 app = Flask(__name__)
 
@@ -20,19 +21,16 @@ def update_density():
     vehicle_count = int(data.get('vehicle_count', 0))
 
     # Calculate density and signal timing
-    # Logic: 
-    #   < 20 vehicles = Low Density (10s green)
-    #   20 - 50 vehicles = Medium Density (20s green)
-    #   > 50 vehicles = High Density (30s green)
-    if vehicle_count < 20:
+    # Logic using config thresholds
+    if vehicle_count < config.THRESHOLD_LOW:
         density = 'Low'
-        green_time = 10
-    elif vehicle_count <= 50:
+        green_time = config.GREEN_TIME_LOW
+    elif vehicle_count <= config.THRESHOLD_MEDIUM:
         density = 'Medium'
-        green_time = 20
+        green_time = config.GREEN_TIME_MEDIUM
     else:
         density = 'High'
-        green_time = 30
+        green_time = config.GREEN_TIME_HIGH
 
     # Save to database
     database.add_traffic_log(lane_id, vehicle_count, density, green_time)
