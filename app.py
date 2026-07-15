@@ -22,17 +22,23 @@ def update_density():
     lane_id = data.get('lane_id')
     vehicle_count = int(data.get('vehicle_count', 0))
 
+    # Load dynamic config settings
+    t_low = int(database.get_setting('threshold_low', config.THRESHOLD_LOW))
+    t_med = int(database.get_setting('threshold_medium', config.THRESHOLD_MEDIUM))
+    gt_low = int(database.get_setting('green_time_low', config.GREEN_TIME_LOW))
+    gt_med = int(database.get_setting('green_time_medium', config.GREEN_TIME_MEDIUM))
+    gt_high = int(database.get_setting('green_time_high', config.GREEN_TIME_HIGH))
+
     # Calculate density and signal timing
-    # Logic using config thresholds
-    if vehicle_count < config.THRESHOLD_LOW:
+    if vehicle_count < t_low:
         density = 'Low'
-        base_green_time = config.GREEN_TIME_LOW
-    elif vehicle_count <= config.THRESHOLD_MEDIUM:
+        base_green_time = gt_low
+    elif vehicle_count <= t_med:
         density = 'Medium'
-        base_green_time = config.GREEN_TIME_MEDIUM
+        base_green_time = gt_med
     else:
         density = 'High'
-        base_green_time = config.GREEN_TIME_HIGH
+        base_green_time = gt_high
 
     # Apply weather adjustment multiplier
     weather = database.get_setting('weather', 'Clear')
@@ -149,6 +155,29 @@ def export_logs():
         mimetype="text/csv",
         headers={"Content-disposition": "attachment; filename=traffic_logs_export.csv"}
     )
+
+@app.route('/api/config', methods=['GET', 'POST'])
+def handle_config():
+    """
+    GET: Returns current threshold & green time configuration.
+    POST: Saves new configuration settings to database.
+    """
+    if request.method == 'POST':
+        data = request.json
+        database.set_setting('threshold_low', int(data.get('threshold_low', config.THRESHOLD_LOW)))
+        database.set_setting('threshold_medium', int(data.get('threshold_medium', config.THRESHOLD_MEDIUM)))
+        database.set_setting('green_time_low', int(data.get('green_time_low', config.GREEN_TIME_LOW)))
+        database.set_setting('green_time_medium', int(data.get('green_time_medium', config.GREEN_TIME_MEDIUM)))
+        database.set_setting('green_time_high', int(data.get('green_time_high', config.GREEN_TIME_HIGH)))
+        return jsonify({'status': 'success', 'message': 'Configuration updated successfully'})
+    
+    return jsonify({
+        'threshold_low': int(database.get_setting('threshold_low', config.THRESHOLD_LOW)),
+        'threshold_medium': int(database.get_setting('threshold_medium', config.THRESHOLD_MEDIUM)),
+        'green_time_low': int(database.get_setting('green_time_low', config.GREEN_TIME_LOW)),
+        'green_time_medium': int(database.get_setting('green_time_medium', config.GREEN_TIME_MEDIUM)),
+        'green_time_high': int(database.get_setting('green_time_high', config.GREEN_TIME_HIGH))
+    })
 
 if __name__ == '__main__':
     database.init_db()
