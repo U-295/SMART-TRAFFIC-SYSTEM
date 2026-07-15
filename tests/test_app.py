@@ -171,5 +171,18 @@ class SmartTrafficTestCase(unittest.TestCase):
         self.assertEqual(row['weather'], 'Fog')
         conn.close()
 
+    def test_pedestrian_crossing_logs_recorded(self):
+        """Test that pedestrian requests are recorded in pedestrian_requests table."""
+        self.client.post('/api/pedestrian_crossing', 
+                         data=json.dumps({'lane_id': 4}),
+                         content_type='application/json')
+        conn = database.get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT lane_id FROM pedestrian_requests ORDER BY requested_at DESC LIMIT 1")
+        row = cursor.fetchone()
+        self.assertIsNotNone(row)
+        self.assertEqual(row['lane_id'], 4)
+        conn.close()
+
 if __name__ == '__main__':
     unittest.main()
