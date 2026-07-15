@@ -97,6 +97,7 @@ def handle_weather():
         weather = data.get('weather', 'Clear')
         if weather in config.WEATHER_MULTIPLIERS:
             database.set_setting('weather', weather)
+            database.log_weather_change(weather)
             return jsonify({'status': 'success', 'weather': weather})
         return jsonify({'status': 'error', 'message': 'Invalid weather condition'}), 400
     

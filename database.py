@@ -58,6 +58,14 @@ def init_db():
     """)
 
     cursor.execute("""
+    CREATE TABLE IF NOT EXISTS weather_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        weather TEXT NOT NULL,
+        changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    cursor.execute("""
     CREATE TABLE IF NOT EXISTS system_settings (
         key TEXT PRIMARY KEY,
         value TEXT NOT NULL
@@ -279,3 +287,19 @@ def get_filtered_logs(lane_id=None, density=None, limit=100):
         finally:
             conn.close()
     return logs
+
+def log_weather_change(weather: str) -> bool:
+    """Inserts a new weather change log."""
+    conn = get_db_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO weather_logs (weather) VALUES (?)", (weather,))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error logging weather change: {e}")
+            return False
+        finally:
+            conn.close()
+    return False
