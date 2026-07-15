@@ -264,6 +264,43 @@
                         </div>
                     </div>
                 </div>
+                
+                <div class="glass-card logs-search-card" style="margin-top: 20px;">
+                    <div class="card-header" style="flex-wrap: wrap; gap: 10px;">
+                        <h3>Detailed Logs Viewer</h3>
+                        <div class="filter-controls" style="display: flex; gap: 8px;">
+                            <select id="filter-lane" onchange="fetchFilteredLogs()" class="filter-select">
+                                <option value="">All Lanes</option>
+                                <option value="1">North Lane</option>
+                                <option value="2">South Lane</option>
+                                <option value="3">East Lane</option>
+                                <option value="4">West Lane</option>
+                            </select>
+                            <select id="filter-density" onchange="fetchFilteredLogs()" class="filter-select">
+                                <option value="">All Densities</option>
+                                <option value="Low">Low</option>
+                                <option value="Medium">Medium</option>
+                                <option value="High">High</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-wrapper search-table-wrapper" style="max-height: 250px; overflow-y: auto;">
+                        <table class="analytics-table">
+                            <thead>
+                                <tr>
+                                    <th>Lane</th>
+                                    <th>Volume</th>
+                                    <th>Density</th>
+                                    <th>Green Time</th>
+                                    <th>Recorded At</th>
+                                </tr>
+                            </thead>
+                            <tbody id="filtered-logs-body">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </section>
         </div>
     </main>
