@@ -56,6 +56,16 @@ function init() {
     simToggle.addEventListener('change', (e) => {
         toggleSimulation(e.target.checked);
     });
+
+    // Fetch and setup Weather
+    fetchWeather();
+    const weatherBtns = document.querySelectorAll('.weather-btn');
+    weatherBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const selectedWeather = e.currentTarget.getAttribute('data-weather');
+            changeWeather(selectedWeather);
+        });
+    });
 }
 
 // Update the visual timer for all lanes
@@ -240,6 +250,60 @@ async function triggerEmergency(laneId) {
     } catch (error) {
         console.error("Error triggering emergency:", error);
     }
+}
+
+// ==========================================
+// Weather Logic
+// ==========================================
+
+const weatherMultipliers = {
+    'Clear': 1.0,
+    'Rain': 1.5,
+    'Fog': 1.3,
+    'Snow': 1.8
+};
+
+async function fetchWeather() {
+    try {
+        const response = await fetch('/api/weather');
+        const data = await response.json();
+        updateWeatherUI(data.weather);
+    } catch (error) {
+        console.error("Error fetching weather:", error);
+    }
+}
+
+async function changeWeather(weather) {
+    try {
+        const response = await fetch('/api/weather', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ weather })
+        });
+        const data = await response.json();
+        if (data.status === 'success') {
+            updateWeatherUI(data.weather);
+            fetchAnalytics();
+        }
+    } catch (error) {
+        console.error("Error changing weather:", error);
+    }
+}
+
+function updateWeatherUI(weather) {
+    const statusLabel = document.getElementById('weather-status-label');
+    const multiplier = weatherMultipliers[weather] || 1.0;
+    if (statusLabel) {
+        statusLabel.textContent = `${weather} (${multiplier}x)`;
+    }
+    const weatherBtns = document.querySelectorAll('.weather-btn');
+    weatherBtns.forEach(btn => {
+        if (btn.getAttribute('data-weather') === weather) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
 }
 
 // 3. Fetch Analytics Data & Update Chart.js
