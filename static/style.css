@@ -758,7 +758,6 @@ input:checked + .slider:before {
     flex: 1;
 }
 
-/* Pedestrian button */
 .btn-pedestrian {
     background: transparent;
     color: var(--accent-green);
@@ -770,7 +769,7 @@ input:checked + .slider:before {
     letter-spacing: 0.5px;
     text-transform: uppercase;
     cursor: pointer;
-    transition: background-color 0.2s, color 0.2s, box-shadow 0.2s;
+    transition: background-color 0.2s, color 0.2s, box-shadow 0.2s, transform 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -781,6 +780,7 @@ input:checked + .slider:before {
     background-color: var(--accent-green);
     color: white;
     box-shadow: 0 0 15px rgba(16, 185, 129, 0.35);
+    transform: scale(1.02);
 }
 
 /* Filter select dropdowns */
@@ -795,6 +795,10 @@ input:checked + .slider:before {
     outline: none;
     cursor: pointer;
     transition: border-color 0.2s;
+}
+
+.filter-select:hover {
+    border-color: rgba(255, 255, 255, 0.15);
 }
 
 .filter-select:focus {
