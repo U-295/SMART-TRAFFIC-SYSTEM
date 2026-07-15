@@ -24,13 +24,18 @@ def update_density():
     # Logic using config thresholds
     if vehicle_count < config.THRESHOLD_LOW:
         density = 'Low'
-        green_time = config.GREEN_TIME_LOW
+        base_green_time = config.GREEN_TIME_LOW
     elif vehicle_count <= config.THRESHOLD_MEDIUM:
         density = 'Medium'
-        green_time = config.GREEN_TIME_MEDIUM
+        base_green_time = config.GREEN_TIME_MEDIUM
     else:
         density = 'High'
-        green_time = config.GREEN_TIME_HIGH
+        base_green_time = config.GREEN_TIME_HIGH
+
+    # Apply weather adjustment multiplier
+    weather = database.get_setting('weather', 'Clear')
+    multiplier = config.WEATHER_MULTIPLIERS.get(weather, 1.0)
+    green_time = int(base_green_time * multiplier)
 
     # Save to database
     database.add_traffic_log(lane_id, vehicle_count, density, green_time)
@@ -40,7 +45,8 @@ def update_density():
         'lane_id': lane_id,
         'density': density,
         'green_time': green_time,
-        'vehicle_count': vehicle_count
+        'vehicle_count': vehicle_count,
+        'weather': weather
     })
 
 @app.route('/api/emergency', methods=['POST'])
