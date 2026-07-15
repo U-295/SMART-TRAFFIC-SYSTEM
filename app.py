@@ -95,6 +95,16 @@ def handle_weather():
     weather = database.get_setting('weather', 'Clear')
     return jsonify({'weather': weather})
 
+@app.route('/api/pedestrian_crossing', methods=['POST'])
+def trigger_pedestrian_crossing():
+    """
+    Logs a pedestrian crossing request for a lane.
+    """
+    data = request.json
+    lane_id = data.get('lane_id')
+    database.add_pedestrian_request(lane_id)
+    return jsonify({'status': 'success', 'message': f'Pedestrian crossing requested for lane {lane_id}'})
+
 if __name__ == '__main__':
     database.init_db()
     app.run(debug=True)
