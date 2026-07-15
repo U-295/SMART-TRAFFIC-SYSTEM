@@ -106,7 +106,8 @@ def handle_weather():
 @app.route('/api/pedestrian_crossing', methods=['POST'])
 def trigger_pedestrian_crossing():
     """
-    Logs a pedestrian crossing request for a lane.
+    Logs a pedestrian crossing request for a lane to prioritize walk cycles.
+    Expects json payload containing lane_id.
     """
     data = request.json
     lane_id = data.get('lane_id')
