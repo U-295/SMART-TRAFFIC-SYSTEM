@@ -268,7 +268,7 @@
                 <div class="glass-card logs-search-card" style="margin-top: 20px;">
                     <div class="card-header" style="flex-wrap: wrap; gap: 10px;">
                         <h3>Detailed Logs Viewer</h3>
-                        <div class="filter-controls" style="display: flex; gap: 8px;">
+                        <div class="filter-controls" style="display: flex; gap: 8px; align-items: center;">
                             <select id="filter-lane" onchange="fetchFilteredLogs()" class="filter-select">
                                 <option value="">All Lanes</option>
                                 <option value="1">North Lane</option>
@@ -282,6 +282,7 @@
                                 <option value="Medium">Medium</option>
                                 <option value="High">High</option>
                             </select>
+                            <button onclick="exportLogsCSV()" class="btn-pedestrian" style="padding: 6px 12px; font-size: 0.75rem; border-radius: 6px; text-transform: none; border-color: rgba(56, 189, 248, 0.25); color: var(--accent-blue);">📥 Export</button>
                         </div>
                     </div>
                     <div class="table-wrapper search-table-wrapper" style="max-height: 250px; overflow-y: auto;">
