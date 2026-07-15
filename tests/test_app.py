@@ -134,5 +134,55 @@ class SmartTrafficTestCase(unittest.TestCase):
         self.assertEqual(data['threshold_low'], 15)
         self.assertEqual(data['green_time_high'], 28)
 
+    def test_weather_multiplier_rain(self):
+        """Test that weather 'Rain' correctly multiplies low green time."""
+        self.client.post('/api/weather', 
+                         data=json.dumps({'weather': 'Rain'}),
+                         content_type='application/json')
+        response = self.client.post('/api/update_density', 
+                                    data=json.dumps({'lane_id': 1, 'vehicle_count': 15}),
+                                    content_type='application/json')
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(data['green_time'], 15)
+
+    def test_weather_multiplier_snow(self):
+        """Test that weather 'Snow' correctly multiplies medium green time."""
+        self.client.post('/api/weather', 
+                         data=json.dumps({'weather': 'Snow'}),
+                         content_type='application/json')
+        response = self.client.post('/api/update_density', 
+                                    data=json.dumps({'lane_id': 2, 'vehicle_count': 35}),
+                                    content_type='application/json')
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(data['green_time'], 36)
+
+    def test_weather_logs_recorded(self):
+        """Test that weather changes are recorded in the weather_logs table."""
+        self.client.post('/api/weather', 
+                         data=json.dumps({'weather': 'Fog'}),
+                         content_type='application/json')
+        conn = database.get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT weather FROM weather_logs ORDER BY changed_at DESC LIMIT 1")
+        row = cursor.fetchone()
+        self.assertIsNotNone(row)
+        self.assertEqual(row['weather'], 'Fog')
+        conn.close()
+
+    def test_pedestrian_crossing_logs_recorded(self):
+        """Test that pedestrian requests are recorded in pedestrian_requests table."""
+        self.client.post('/api/pedestrian_crossing', 
+                         data=json.dumps({'lane_id': 4}),
+                         content_type='application/json')
+        conn = database.get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT lane_id FROM pedestrian_requests ORDER BY requested_at DESC LIMIT 1")
+        row = cursor.fetchone()
+        self.assertIsNotNone(row)
+        self.assertEqual(row['lane_id'], 4)
+        conn.close()
+
 if __name__ == '__main__':
     unittest.main()

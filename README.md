@@ -55,6 +55,20 @@ python -m unittest tests/test_app.py
 - **`pedestrian_requests` table:** Tracks every pedestrian crossing priority trigger.
 - **`system_settings` table:** Stores persistent configuration settings (weather mode, vehicle density thresholds, and green light timings).
 
+
+---
+
+## 🔌 API Reference
+
+- **`GET /api/status`:** Returns analytics summary including total vehicle volume and busiest hour.
+- **`POST /api/update_density`:** Submits lane vehicle count and calculates dynamic green light timing.
+- **`POST /api/emergency`:** Triggers 30-second priority green light override for the specified lane.
+- **`POST /api/pedestrian_crossing`:** Requests 15-second priority walk signal window for the specified lane.
+- **`GET /api/weather` / `POST /api/weather`:** Fetches or updates current weather mode (Rain, Snow, Fog, Clear).
+- **`GET /api/config` / `POST /api/config`:** Retrieves or saves timing thresholds configuration.
+- **`GET /api/logs`:** Searches historical traffic logs with optional query filters.
+- **`GET /api/logs/export`:** Streams search-filtered database log history directly in CSV format.
+
 ---
 
 ## 👥 Contributors

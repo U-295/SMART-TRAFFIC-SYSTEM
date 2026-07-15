@@ -4,7 +4,7 @@ import config
 
 DB_FILE = config.DB_FILE
 
-def get_db_connection():
+def get_db_connection() -> sqlite3.Connection:
     """Helper function to establish a database connection."""
     try:
         connection = sqlite3.connect(DB_FILE)
@@ -54,6 +54,16 @@ def init_db():
         lane_id INTEGER NOT NULL,
         requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (lane_id) REFERENCES lanes(id)
+    )
+    """)
+    
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_pedestrian_lane ON pedestrian_requests(lane_id)")
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS weather_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        weather TEXT NOT NULL,
+        changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
 
@@ -230,7 +240,7 @@ def set_setting(key, value):
             conn.close()
     return False
 
-def add_pedestrian_request(lane_id):
+def add_pedestrian_request(lane_id: int) -> bool:
     """Inserts a new pedestrian crossing request log."""
     conn = get_db_connection()
     if conn:
@@ -279,3 +289,19 @@ def get_filtered_logs(lane_id=None, density=None, limit=100):
         finally:
             conn.close()
     return logs
+
+def log_weather_change(weather: str) -> bool:
+    """Inserts a new weather change log."""
+    conn = get_db_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO weather_logs (weather) VALUES (?)", (weather,))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error logging weather change: {e}")
+            return False
+        finally:
+            conn.close()
+    return False

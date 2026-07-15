@@ -1,4 +1,11 @@
-// Global State
+// Global State representing the active intersection monitor configuration
+/**
+ * @type {number} Total number of traffic lanes
+ * @type {number} Currently active green lane ID (1-4)
+ * @type {number} Remaining seconds for active green light duration
+ * @type {boolean} State flag indicating active emergency priority mode
+ * @type {boolean} State flag indicating active pedestrian walk priority mode
+ */
 const numLanes = 4;
 let activeLane = 1;
 let timeRemaining = 10; // Default starting time
