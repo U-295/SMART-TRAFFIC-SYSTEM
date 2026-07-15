@@ -48,6 +48,15 @@ def init_db():
     )
     """)
     
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS system_settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+    )
+    """)
+    
+    cursor.execute("INSERT OR IGNORE INTO system_settings (key, value) VALUES ('weather', 'Clear')")
+    
     # Insert default lanes
     cursor.execute("INSERT OR IGNORE INTO lanes (id, name) VALUES (1, 'North Lane')")
     cursor.execute("INSERT OR IGNORE INTO lanes (id, name) VALUES (2, 'South Lane')")
@@ -176,3 +185,38 @@ def get_emergency_history_logs(limit=10):
         finally:
             conn.close()
     return logs
+
+def get_setting(key, default_value=None):
+    """Retrieves a setting value from the system_settings table."""
+    conn = get_db_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT value FROM system_settings WHERE key = ?", (key,))
+            row = cursor.fetchone()
+            if row:
+                return row['value']
+        except Exception as e:
+            print(f"Error getting setting {key}: {e}")
+        finally:
+            conn.close()
+    return default_value
+
+def set_setting(key, value):
+    """Sets/Updates a setting value in the system_settings table."""
+    conn = get_db_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO system_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                (key, str(value))
+            )
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error setting setting {key}: {e}")
+            return False
+        finally:
+            conn.close()
+    return False
