@@ -4,7 +4,7 @@ import config
 
 DB_FILE = config.DB_FILE
 
-def get_db_connection():
+def get_db_connection() -> sqlite3.Connection:
     """Helper function to establish a database connection."""
     try:
         connection = sqlite3.connect(DB_FILE)
