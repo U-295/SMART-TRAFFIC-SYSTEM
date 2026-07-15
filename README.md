@@ -74,3 +74,6 @@ python -m unittest tests/test_app.py
 ## 👥 Contributors
 
 - **Dushyanth136** - Core Developer & System Designer
+- **U-295** - Lead Systems Architect & Performance Optimization Engineer
+- **Puneethkumar0417** - Full Stack Developer & UI/UX Designer
+- **punith-1013** - Verification & Database Engineer
