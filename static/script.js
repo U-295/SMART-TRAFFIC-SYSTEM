@@ -563,5 +563,18 @@ async function fetchFilteredLogs() {
     }
 }
 
+function exportLogsCSV() {
+    const laneSelect = document.getElementById('filter-lane');
+    const densitySelect = document.getElementById('filter-density');
+    const laneId = laneSelect ? laneSelect.value : '';
+    const density = densitySelect ? densitySelect.value : '';
+    
+    let url = '/api/logs/export?';
+    if (laneId) url += `lane_id=${laneId}&`;
+    if (density) url += `density=${density}&`;
+    
+    window.location.href = url;
+}
+
 // Run init when page loads
 window.onload = init;
