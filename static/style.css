@@ -797,6 +797,10 @@ input:checked + .slider:before {
     transition: border-color 0.2s;
 }
 
+.filter-select:hover {
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
 .filter-select:focus {
     border-color: var(--accent-blue);
 }
