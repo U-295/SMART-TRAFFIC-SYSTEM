@@ -1,76 +1,11 @@
-from flask import Flask, render_template, request, jsonify
-import sqlite3
-import os
+from flask import Flask, render_template, request, jsonify, Response
 from datetime import datetime
+import csv
+import io
+import database
+import config
 
 app = Flask(__name__)
-
-DB_FILE = 'traffic.db'
-
-def init_db():
-    """Initializes the SQLite database with tables and sample data if empty."""
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    
-    # Create tables
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS lanes (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL UNIQUE
-    )
-    """)
-    
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS traffic_logs (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        lane_id INTEGER NOT NULL,
-        vehicle_count INTEGER NOT NULL,
-        density_level TEXT NOT NULL,
-        green_time INTEGER NOT NULL,
-        recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (lane_id) REFERENCES lanes(id)
-    )
-    """)
-    
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS emergency_logs (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        lane_id INTEGER NOT NULL,
-        triggered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (lane_id) REFERENCES lanes(id)
-    )
-    """)
-    
-    # Insert default lanes
-    cursor.execute("INSERT OR IGNORE INTO lanes (id, name) VALUES (1, 'North Lane')")
-    cursor.execute("INSERT OR IGNORE INTO lanes (id, name) VALUES (2, 'South Lane')")
-    cursor.execute("INSERT OR IGNORE INTO lanes (id, name) VALUES (3, 'East Lane')")
-    cursor.execute("INSERT OR IGNORE INTO lanes (id, name) VALUES (4, 'West Lane')")
-    
-    # Check if logs are empty, if so, insert sample data
-    cursor.execute("SELECT COUNT(*) FROM traffic_logs")
-    if cursor.fetchone()[0] == 0:
-        cursor.execute("INSERT INTO traffic_logs (lane_id, vehicle_count, density_level, green_time) VALUES (1, 15, 'Low', 10)")
-        cursor.execute("INSERT INTO traffic_logs (lane_id, vehicle_count, density_level, green_time) VALUES (2, 45, 'Medium', 20)")
-        cursor.execute("INSERT INTO traffic_logs (lane_id, vehicle_count, density_level, green_time) VALUES (3, 80, 'High', 30)")
-        cursor.execute("INSERT INTO traffic_logs (lane_id, vehicle_count, density_level, green_time) VALUES (4, 25, 'Low', 10)")
-        
-    cursor.execute("SELECT COUNT(*) FROM emergency_logs")
-    if cursor.fetchone()[0] == 0:
-        cursor.execute("INSERT INTO emergency_logs (lane_id) VALUES (1)")
-        
-    conn.commit()
-    conn.close()
-
-def get_db_connection():
-    """Helper function to establish a database connection."""
-    try:
-        connection = sqlite3.connect(DB_FILE)
-        connection.row_factory = sqlite3.Row
-        return connection
-    except Exception as e:
-        print(f"Database connection error: {e}")
-        return None
 
 @app.route('/')
 def index():
@@ -87,40 +22,39 @@ def update_density():
     lane_id = data.get('lane_id')
     vehicle_count = int(data.get('vehicle_count', 0))
 
+    # Load dynamic config settings
+    t_low = int(database.get_setting('threshold_low', config.THRESHOLD_LOW))
+    t_med = int(database.get_setting('threshold_medium', config.THRESHOLD_MEDIUM))
+    gt_low = int(database.get_setting('green_time_low', config.GREEN_TIME_LOW))
+    gt_med = int(database.get_setting('green_time_medium', config.GREEN_TIME_MEDIUM))
+    gt_high = int(database.get_setting('green_time_high', config.GREEN_TIME_HIGH))
+
     # Calculate density and signal timing
-    # Logic: 
-    #   < 20 vehicles = Low Density (10s green)
-    #   20 - 50 vehicles = Medium Density (20s green)
-    #   > 50 vehicles = High Density (30s green)
-    if vehicle_count < 20:
+    if vehicle_count < t_low:
         density = 'Low'
-        green_time = 10
-    elif vehicle_count <= 50:
+        base_green_time = gt_low
+    elif vehicle_count <= t_med:
         density = 'Medium'
-        green_time = 20
+        base_green_time = gt_med
     else:
         density = 'High'
-        green_time = 30
+        base_green_time = gt_high
+
+    # Apply weather adjustment multiplier
+    weather = database.get_setting('weather', 'Clear')
+    multiplier = config.WEATHER_MULTIPLIERS.get(weather, 1.0)
+    green_time = int(base_green_time * multiplier)
 
     # Save to database
-    conn = get_db_connection()
-    if conn:
-        try:
-            cursor = conn.cursor()
-            sql = "INSERT INTO traffic_logs (lane_id, vehicle_count, density_level, green_time) VALUES (?, ?, ?, ?)"
-            cursor.execute(sql, (lane_id, vehicle_count, density, green_time))
-            conn.commit()
-        except Exception as e:
-            print(f"Error saving traffic log: {e}")
-        finally:
-            conn.close()
+    database.add_traffic_log(lane_id, vehicle_count, density, green_time)
 
     return jsonify({
         'status': 'success',
         'lane_id': lane_id,
         'density': density,
         'green_time': green_time,
-        'vehicle_count': vehicle_count
+        'vehicle_count': vehicle_count,
+        'weather': weather
     })
 
 @app.route('/api/emergency', methods=['POST'])
@@ -131,17 +65,7 @@ def trigger_emergency():
     data = request.json
     lane_id = data.get('lane_id')
 
-    conn = get_db_connection()
-    if conn:
-        try:
-            cursor = conn.cursor()
-            sql = "INSERT INTO emergency_logs (lane_id) VALUES (?)"
-            cursor.execute(sql, (lane_id,))
-            conn.commit()
-        except Exception as e:
-            print(f"Error saving emergency log: {e}")
-        finally:
-            conn.close()
+    database.add_emergency_log(lane_id)
 
     return jsonify({'status': 'success', 'message': f'Emergency triggered for lane {lane_id}'})
 
@@ -150,55 +74,7 @@ def get_status():
     """
     Fetches analytics data: total vehicles today, peak hour, and hourly breakdown.
     """
-    conn = get_db_connection()
-    analytics = {
-        'total_vehicles': 0,
-        'peak_hour': 'N/A',
-        'hourly_data': []
-    }
-
-    if conn:
-        try:
-            cursor = conn.cursor()
-            # 1. Total vehicles today
-            cursor.execute("""
-                SELECT SUM(vehicle_count) as total 
-                FROM traffic_logs 
-                WHERE date(recorded_at, 'localtime') = date('now', 'localtime')
-            """)
-            result = cursor.fetchone()
-            if result and result['total']:
-                analytics['total_vehicles'] = int(result['total'])
-
-            # 2. Peak hour today
-            cursor.execute("""
-                SELECT strftime('%H', recorded_at, 'localtime') as hour, SUM(vehicle_count) as total_volume
-                FROM traffic_logs
-                WHERE date(recorded_at, 'localtime') = date('now', 'localtime')
-                GROUP BY hour
-                ORDER BY total_volume DESC
-                LIMIT 1
-            """)
-            peak_result = cursor.fetchone()
-            if peak_result and peak_result['hour'] is not None:
-                # Format hour neatly, e.g., "14:00 - 15:00"
-                h = int(peak_result['hour'])
-                analytics['peak_hour'] = f"{h:02d}:00 - {(h+1)%24:02d}:00"
-
-            # 3. Hourly traffic for charts/tables
-            cursor.execute("""
-                SELECT CAST(strftime('%H', recorded_at, 'localtime') AS INTEGER) as hour, SUM(vehicle_count) as total_volume
-                FROM traffic_logs
-                WHERE date(recorded_at, 'localtime') = date('now', 'localtime')
-                GROUP BY hour
-                ORDER BY hour ASC
-            """)
-            hourly_rows = cursor.fetchall()
-            analytics['hourly_data'] = [dict(row) for row in hourly_rows]
-        except Exception as e:
-            print(f"Error fetching analytics: {e}")
-        finally:
-            conn.close()
+    analytics = database.get_analytics_today()
 
     return jsonify(analytics)
 
@@ -207,26 +83,102 @@ def get_emergency_history():
     """
     Fetches the recent emergency logs with lane names.
     """
-    conn = get_db_connection()
-    logs = []
-    if conn:
-        try:
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT e.id, datetime(e.triggered_at, 'localtime') as triggered_at, l.name as lane_name
-                FROM emergency_logs e
-                JOIN lanes l ON e.lane_id = l.id
-                ORDER BY e.triggered_at DESC
-                LIMIT 10
-            """)
-            rows = cursor.fetchall()
-            logs = [dict(row) for row in rows]
-        except Exception as e:
-            print(f"Error fetching emergency logs: {e}")
-        finally:
-            conn.close()
+    logs = database.get_emergency_history_logs()
     return jsonify(logs)
 
+@app.route('/api/weather', methods=['GET', 'POST'])
+def handle_weather():
+    """
+    GET: Returns current system weather.
+    POST: Updates system weather and adjusts timing.
+    """
+    if request.method == 'POST':
+        data = request.json
+        weather = data.get('weather', 'Clear')
+        if weather in config.WEATHER_MULTIPLIERS:
+            database.set_setting('weather', weather)
+            return jsonify({'status': 'success', 'weather': weather})
+        return jsonify({'status': 'error', 'message': 'Invalid weather condition'}), 400
+    
+    weather = database.get_setting('weather', 'Clear')
+    return jsonify({'weather': weather})
+
+@app.route('/api/pedestrian_crossing', methods=['POST'])
+def trigger_pedestrian_crossing():
+    """
+    Logs a pedestrian crossing request for a lane.
+    """
+    data = request.json
+    lane_id = data.get('lane_id')
+    database.add_pedestrian_request(lane_id)
+    return jsonify({'status': 'success', 'message': f'Pedestrian crossing requested for lane {lane_id}'})
+
+@app.route('/api/logs', methods=['GET'])
+def get_logs():
+    """
+    Fetches traffic logs with filters for lane and density level.
+    """
+    lane_id = request.args.get('lane_id', type=int)
+    density = request.args.get('density')
+    limit = request.args.get('limit', default=50, type=int)
+    
+    logs = database.get_filtered_logs(lane_id=lane_id, density=density, limit=limit)
+    return jsonify(logs)
+
+@app.route('/api/logs/export', methods=['GET'])
+def export_logs():
+    """
+    Exports traffic logs to CSV format.
+    """
+    lane_id = request.args.get('lane_id', type=int)
+    density = request.args.get('density')
+    
+    logs = database.get_filtered_logs(lane_id=lane_id, density=density, limit=1000)
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['Log ID', 'Lane Name', 'Vehicle Count', 'Density Level', 'Green Time (s)', 'Recorded At'])
+    
+    for log in logs:
+        writer.writerow([
+            log['id'],
+            log['lane_name'],
+            log['vehicle_count'],
+            log['density_level'],
+            log['green_time'],
+            log['recorded_at']
+        ])
+    
+    output.seek(0)
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-disposition": "attachment; filename=traffic_logs_export.csv"}
+    )
+
+@app.route('/api/config', methods=['GET', 'POST'])
+def handle_config():
+    """
+    GET: Returns current threshold & green time configuration.
+    POST: Saves new configuration settings to database.
+    """
+    if request.method == 'POST':
+        data = request.json
+        database.set_setting('threshold_low', int(data.get('threshold_low', config.THRESHOLD_LOW)))
+        database.set_setting('threshold_medium', int(data.get('threshold_medium', config.THRESHOLD_MEDIUM)))
+        database.set_setting('green_time_low', int(data.get('green_time_low', config.GREEN_TIME_LOW)))
+        database.set_setting('green_time_medium', int(data.get('green_time_medium', config.GREEN_TIME_MEDIUM)))
+        database.set_setting('green_time_high', int(data.get('green_time_high', config.GREEN_TIME_HIGH)))
+        return jsonify({'status': 'success', 'message': 'Configuration updated successfully'})
+    
+    return jsonify({
+        'threshold_low': int(database.get_setting('threshold_low', config.THRESHOLD_LOW)),
+        'threshold_medium': int(database.get_setting('threshold_medium', config.THRESHOLD_MEDIUM)),
+        'green_time_low': int(database.get_setting('green_time_low', config.GREEN_TIME_LOW)),
+        'green_time_medium': int(database.get_setting('green_time_medium', config.GREEN_TIME_MEDIUM)),
+        'green_time_high': int(database.get_setting('green_time_high', config.GREEN_TIME_HIGH))
+    })
+
 if __name__ == '__main__':
-    init_db()
+    database.init_db()
     app.run(debug=True)

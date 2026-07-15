@@ -679,3 +679,129 @@ input:checked + .slider:before {
 ::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.2);
 }
+
+/* Header controls grouping */
+.header-controls {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* Weather controls */
+.weather-control {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--card-border);
+    padding: 10px 16px;
+    border-radius: 12px;
+    gap: 12px;
+}
+
+.weather-text-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.weather-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.weather-subtitle {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.weather-options {
+    display: flex;
+    gap: 6px;
+}
+
+.weather-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--card-border);
+    color: var(--text-primary);
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+.weather-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-1px);
+}
+
+.weather-btn.active {
+    background: rgba(56, 189, 248, 0.2);
+    border-color: var(--accent-blue);
+    color: var(--accent-blue);
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+}
+
+/* Priority controls row */
+.btn-priority-row {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+}
+
+.btn-priority-row button {
+    flex: 1;
+}
+
+/* Pedestrian button */
+.btn-pedestrian {
+    background: transparent;
+    color: var(--accent-green);
+    border: 1.5px solid var(--accent-green);
+    border-radius: 8px;
+    padding: 10px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s, box-shadow 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.btn-pedestrian:hover {
+    background-color: var(--accent-green);
+    color: white;
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.35);
+}
+
+/* Filter select dropdowns */
+.filter-select {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--card-border);
+    color: var(--text-primary);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.filter-select:focus {
+    border-color: var(--accent-blue);
+}
+
+.filter-select option {
+    background: #0f172a;
+    color: var(--text-primary);
+}

@@ -22,15 +22,30 @@
                 <h1>Smart Traffic Management System</h1>
                 <p>Dynamic signal optimization & predictive traffic routing dashboard</p>
             </div>
-            <div class="simulation-control">
-                <div class="sim-text-group">
-                    <span class="sim-title">Auto Simulation</span>
-                    <span class="sim-subtitle" id="sim-status-label">Inactive</span>
+            <div class="header-controls">
+                <div class="simulation-control">
+                    <div class="sim-text-group">
+                        <span class="sim-title">Auto Simulation</span>
+                        <span class="sim-subtitle" id="sim-status-label">Inactive</span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="simulation-toggle">
+                        <span class="slider round"></span>
+                    </label>
                 </div>
-                <label class="switch">
-                    <input type="checkbox" id="simulation-toggle">
-                    <span class="slider round"></span>
-                </label>
+                
+                <div class="weather-control">
+                    <div class="weather-text-group">
+                        <span class="weather-title">Active Weather</span>
+                        <span class="weather-subtitle" id="weather-status-label">Clear (1.0x)</span>
+                    </div>
+                    <div class="weather-options">
+                        <button class="weather-btn active" data-weather="Clear" title="Clear Weather (1.0x)">☀️</button>
+                        <button class="weather-btn" data-weather="Rain" title="Rainy Weather (1.5x)">🌧️</button>
+                        <button class="weather-btn" data-weather="Fog" title="Foggy Weather (1.3x)">🌫️</button>
+                        <button class="weather-btn" data-weather="Snow" title="Snowy Weather (1.8x)">❄️</button>
+                    </div>
+                </div>
             </div>
         </div>
     </header>
@@ -108,7 +123,10 @@
                                 <input type="number" id="count-1" min="0" placeholder="Vehicles">
                                 <button onclick="updateDensity(1)" class="btn-update">Update</button>
                             </div>
-                            <button onclick="triggerEmergency(1)" class="btn-emergency">🚨 Emergency Priority</button>
+                            <div class="btn-priority-row">
+                                <button onclick="triggerEmergency(1)" class="btn-emergency">🚨 Emergency</button>
+                                <button onclick="requestPedestrian(1)" class="btn-pedestrian">🚶 Pedestrian</button>
+                            </div>
                         </div>
                     </div>
 
@@ -134,7 +152,10 @@
                                 <input type="number" id="count-2" min="0" placeholder="Vehicles">
                                 <button onclick="updateDensity(2)" class="btn-update">Update</button>
                             </div>
-                            <button onclick="triggerEmergency(2)" class="btn-emergency">🚨 Emergency Priority</button>
+                            <div class="btn-priority-row">
+                                <button onclick="triggerEmergency(2)" class="btn-emergency">🚨 Emergency</button>
+                                <button onclick="requestPedestrian(2)" class="btn-pedestrian">🚶 Pedestrian</button>
+                            </div>
                         </div>
                     </div>
 
@@ -160,7 +181,10 @@
                                 <input type="number" id="count-3" min="0" placeholder="Vehicles">
                                 <button onclick="updateDensity(3)" class="btn-update">Update</button>
                             </div>
-                            <button onclick="triggerEmergency(3)" class="btn-emergency">🚨 Emergency Priority</button>
+                            <div class="btn-priority-row">
+                                <button onclick="triggerEmergency(3)" class="btn-emergency">🚨 Emergency</button>
+                                <button onclick="requestPedestrian(3)" class="btn-pedestrian">🚶 Pedestrian</button>
+                            </div>
                         </div>
                     </div>
 
@@ -186,8 +210,48 @@
                                 <input type="number" id="count-4" min="0" placeholder="Vehicles">
                                 <button onclick="updateDensity(4)" class="btn-update">Update</button>
                             </div>
-                            <button onclick="triggerEmergency(4)" class="btn-emergency">🚨 Emergency Priority</button>
+                            <div class="btn-priority-row">
+                                <button onclick="triggerEmergency(4)" class="btn-emergency">🚨 Emergency</button>
+                                <button onclick="requestPedestrian(4)" class="btn-pedestrian">🚶 Pedestrian</button>
+                            </div>
                         </div>
+                    </div>
+                </div>
+
+                <div class="glass-card config-card" style="margin-top: 24px;">
+                    <div class="card-header">
+                        <h3>Signal Configuration Settings</h3>
+                    </div>
+                    <div class="config-grid" style="display: flex; gap: 24px; margin-top: 16px; flex-wrap: wrap;">
+                        <div class="config-col" style="flex: 1; min-width: 200px;">
+                            <h4 style="color: var(--accent-blue); margin-bottom: 12px; font-size: 0.9rem;">Vehicle Thresholds</h4>
+                            <div class="config-input-group" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px;">
+                                <label for="cfg-th-low" style="font-size: 0.75rem; color: var(--text-secondary);">Low Threshold (Max)</label>
+                                <input type="number" id="cfg-th-low" min="1" value="20" class="filter-select" style="width: 100%;">
+                            </div>
+                            <div class="config-input-group" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px;">
+                                <label for="cfg-th-med" style="font-size: 0.75rem; color: var(--text-secondary);">Medium Threshold (Max)</label>
+                                <input type="number" id="cfg-th-med" min="1" value="50" class="filter-select" style="width: 100%;">
+                            </div>
+                        </div>
+                        <div class="config-col" style="flex: 1; min-width: 200px;">
+                            <h4 style="color: var(--accent-green); margin-bottom: 12px; font-size: 0.9rem;">Green Light Timings (sec)</h4>
+                            <div class="config-input-group" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px;">
+                                <label for="cfg-gt-low" style="font-size: 0.75rem; color: var(--text-secondary);">Low Density</label>
+                                <input type="number" id="cfg-gt-low" min="1" value="10" class="filter-select" style="width: 100%;">
+                            </div>
+                            <div class="config-input-group" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px;">
+                                <label for="cfg-gt-med" style="font-size: 0.75rem; color: var(--text-secondary);">Medium Density</label>
+                                <input type="number" id="cfg-gt-med" min="1" value="20" class="filter-select" style="width: 100%;">
+                            </div>
+                            <div class="config-input-group" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px;">
+                                <label for="cfg-gt-high" style="font-size: 0.75rem; color: var(--text-secondary);">High Density</label>
+                                <input type="number" id="cfg-gt-high" min="1" value="30" class="filter-select" style="width: 100%;">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="config-actions" style="margin-top: 16px; display: flex; justify-content: flex-end;">
+                        <button onclick="saveConfiguration()" class="btn-update" style="padding: 8px 20px; font-weight: 600; font-size: 0.85rem;">Save Settings</button>
                     </div>
                 </div>
             </section>
@@ -235,6 +299,44 @@
                                 <!-- Populated via JS -->
                             </ul>
                         </div>
+                    </div>
+                </div>
+                
+                <div class="glass-card logs-search-card" style="margin-top: 20px;">
+                    <div class="card-header" style="flex-wrap: wrap; gap: 10px;">
+                        <h3>Detailed Logs Viewer</h3>
+                        <div class="filter-controls" style="display: flex; gap: 8px; align-items: center;">
+                            <select id="filter-lane" onchange="fetchFilteredLogs()" class="filter-select">
+                                <option value="">All Lanes</option>
+                                <option value="1">North Lane</option>
+                                <option value="2">South Lane</option>
+                                <option value="3">East Lane</option>
+                                <option value="4">West Lane</option>
+                            </select>
+                            <select id="filter-density" onchange="fetchFilteredLogs()" class="filter-select">
+                                <option value="">All Densities</option>
+                                <option value="Low">Low</option>
+                                <option value="Medium">Medium</option>
+                                <option value="High">High</option>
+                            </select>
+                            <button onclick="exportLogsCSV()" class="btn-pedestrian" style="padding: 6px 12px; font-size: 0.75rem; border-radius: 6px; text-transform: none; border-color: rgba(56, 189, 248, 0.25); color: var(--accent-blue);">📥 Export</button>
+                        </div>
+                    </div>
+                    <div class="table-wrapper search-table-wrapper" style="max-height: 250px; overflow-y: auto;">
+                        <table class="analytics-table">
+                            <thead>
+                                <tr>
+                                    <th>Lane</th>
+                                    <th>Volume</th>
+                                    <th>Density</th>
+                                    <th>Green Time</th>
+                                    <th>Recorded At</th>
+                                </tr>
+                            </thead>
+                            <tbody id="filtered-logs-body">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </section>

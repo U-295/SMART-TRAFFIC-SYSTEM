@@ -3,6 +3,7 @@ const numLanes = 4;
 let activeLane = 1;
 let timeRemaining = 10; // Default starting time
 let isEmergency = false;
+let isPedestrian = false;
 let simulationInterval = null;
 let trafficChart = null;
 
@@ -35,12 +36,13 @@ function init() {
             updateTimerDisplay();
             
             // Yellow light logic (last 3 seconds)
-            if (timeRemaining === 3 && !isEmergency) {
+            if (timeRemaining === 3 && !isEmergency && !isPedestrian) {
                 setYellowLight(activeLane);
             }
         } else {
             // Time is up, switch to next lane
             isEmergency = false; // Reset emergency state when time is up
+            isPedestrian = false;
             switchToNextLane();
         }
     }, 1000);
@@ -56,6 +58,22 @@ function init() {
     simToggle.addEventListener('change', (e) => {
         toggleSimulation(e.target.checked);
     });
+
+    // Fetch and setup Weather
+    fetchWeather();
+    const weatherBtns = document.querySelectorAll('.weather-btn');
+    weatherBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const selectedWeather = e.currentTarget.getAttribute('data-weather');
+            changeWeather(selectedWeather);
+        });
+    });
+
+    // Initial config load
+    fetchConfiguration();
+
+    // Initial logs load
+    fetchFilteredLogs();
 }
 
 // Update the visual timer for all lanes
@@ -63,11 +81,18 @@ function updateTimerDisplay() {
     for (let i = 1; i <= numLanes; i++) {
         const timerEl = document.getElementById(`timer-${i}`);
         if (i === activeLane) {
-            timerEl.textContent = timeRemaining.toString().padStart(2, '0');
+            if (isPedestrian) {
+                timerEl.textContent = "🚶 " + timeRemaining.toString().padStart(2, '0');
+                timerEl.style.color = '#10b981';
+            } else {
+                timerEl.textContent = timeRemaining.toString().padStart(2, '0');
+            }
             
             // Text color coding
             if (isEmergency) {
                 timerEl.style.color = '#ef4444'; // Red for emergency countdown
+            } else if (isPedestrian) {
+                // Keep pedestrian walking green
             } else if (timeRemaining <= 3) {
                 timerEl.style.color = '#fbbf24'; // Yellow warning
             } else {
@@ -233,6 +258,7 @@ async function triggerEmergency(laneId) {
             activeLane = laneId;
             timeRemaining = 30; // Give emergency vehicle 30 seconds
             isEmergency = true;
+            isPedestrian = false;
             updateSignals();
             fetchEmergencyHistory();
             fetchAnalytics();
@@ -240,6 +266,85 @@ async function triggerEmergency(laneId) {
     } catch (error) {
         console.error("Error triggering emergency:", error);
     }
+}
+
+// 2.5 Trigger Pedestrian Crossing Priority
+async function requestPedestrian(laneId) {
+    try {
+        const response = await fetch('/api/pedestrian_crossing', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lane_id: laneId })
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            // Give 15 seconds pedestrian crossing window
+            activeLane = laneId;
+            timeRemaining = 15;
+            isPedestrian = true;
+            isEmergency = false;
+            updateSignals();
+            fetchAnalytics();
+        }
+    } catch (error) {
+        console.error("Error requesting pedestrian crossing:", error);
+    }
+}
+
+// ==========================================
+// Weather Logic
+// ==========================================
+
+const weatherMultipliers = {
+    'Clear': 1.0,
+    'Rain': 1.5,
+    'Fog': 1.3,
+    'Snow': 1.8
+};
+
+async function fetchWeather() {
+    try {
+        const response = await fetch('/api/weather');
+        const data = await response.json();
+        updateWeatherUI(data.weather);
+    } catch (error) {
+        console.error("Error fetching weather:", error);
+    }
+}
+
+async function changeWeather(weather) {
+    try {
+        const response = await fetch('/api/weather', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ weather })
+        });
+        const data = await response.json();
+        if (data.status === 'success') {
+            updateWeatherUI(data.weather);
+            fetchAnalytics();
+        }
+    } catch (error) {
+        console.error("Error changing weather:", error);
+    }
+}
+
+function updateWeatherUI(weather) {
+    const statusLabel = document.getElementById('weather-status-label');
+    const multiplier = weatherMultipliers[weather] || 1.0;
+    if (statusLabel) {
+        statusLabel.textContent = `${weather} (${multiplier}x)`;
+    }
+    const weatherBtns = document.querySelectorAll('.weather-btn');
+    weatherBtns.forEach(btn => {
+        if (btn.getAttribute('data-weather') === weather) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
 }
 
 // 3. Fetch Analytics Data & Update Chart.js
@@ -412,6 +517,116 @@ function updateChartData(hourlyData) {
     trafficChart.data.labels = labels;
     trafficChart.data.datasets[0].data = values;
     trafficChart.update();
+}
+
+// Fetch logs with current filters applied
+async function fetchFilteredLogs() {
+    const laneSelect = document.getElementById('filter-lane');
+    const densitySelect = document.getElementById('filter-density');
+    
+    // Check if element exists before accessing values (useful during tests)
+    const laneId = laneSelect ? laneSelect.value : '';
+    const density = densitySelect ? densitySelect.value : '';
+    
+    let url = '/api/logs?limit=50';
+    if (laneId) url += `&lane_id=${laneId}`;
+    if (density) url += `&density=${density}`;
+    
+    try {
+        const response = await fetch(url);
+        const logs = await response.json();
+        
+        const tbody = document.getElementById('filtered-logs-body');
+        if (!tbody) return; // Exit if tbody isn't loaded yet
+        
+        tbody.innerHTML = '';
+        
+        if (logs && logs.length > 0) {
+            logs.forEach(log => {
+                const tr = document.createElement('tr');
+                let densityColor = '#64748b';
+                if (log.density_level === 'Low') densityColor = '#10b981';
+                else if (log.density_level === 'Medium') densityColor = '#fbbf24';
+                else if (log.density_level === 'High') densityColor = '#ef4444';
+                
+                tr.innerHTML = `
+                    <td><strong>${log.lane_name}</strong></td>
+                    <td>${log.vehicle_count}</td>
+                    <td><span style="color: ${densityColor}; font-weight: 600;">${log.density_level}</span></td>
+                    <td>${log.green_time}s</td>
+                    <td>${log.recorded_at}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } else {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No logs found matching filters.</td></tr>`;
+        }
+    } catch (error) {
+        console.error("Error fetching filtered logs:", error);
+    }
+}
+
+function exportLogsCSV() {
+    const laneSelect = document.getElementById('filter-lane');
+    const densitySelect = document.getElementById('filter-density');
+    const laneId = laneSelect ? laneSelect.value : '';
+    const density = densitySelect ? densitySelect.value : '';
+    
+    let url = '/api/logs/export?';
+    if (laneId) url += `lane_id=${laneId}&`;
+    if (density) url += `density=${density}&`;
+    
+    window.location.href = url;
+}
+
+async function fetchConfiguration() {
+    try {
+        const response = await fetch('/api/config');
+        const config = await response.json();
+        
+        const thLowInput = document.getElementById('cfg-th-low');
+        const thMedInput = document.getElementById('cfg-th-med');
+        const gtLowInput = document.getElementById('cfg-gt-low');
+        const gtMedInput = document.getElementById('cfg-gt-med');
+        const gtHighInput = document.getElementById('cfg-gt-high');
+        
+        if (thLowInput) thLowInput.value = config.threshold_low;
+        if (thMedInput) thMedInput.value = config.threshold_medium;
+        if (gtLowInput) gtLowInput.value = config.green_time_low;
+        if (gtMedInput) gtMedInput.value = config.green_time_medium;
+        if (gtHighInput) gtHighInput.value = config.green_time_high;
+    } catch (error) {
+        console.error("Error fetching configuration:", error);
+    }
+}
+
+async function saveConfiguration() {
+    const threshold_low = document.getElementById('cfg-th-low').value;
+    const threshold_medium = document.getElementById('cfg-th-med').value;
+    const green_time_low = document.getElementById('cfg-gt-low').value;
+    const green_time_medium = document.getElementById('cfg-gt-med').value;
+    const green_time_high = document.getElementById('cfg-gt-high').value;
+    
+    try {
+        const response = await fetch('/api/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                threshold_low,
+                threshold_medium,
+                green_time_low,
+                green_time_medium,
+                green_time_high
+            })
+        });
+        const data = await response.json();
+        if (data.status === 'success') {
+            alert("Settings saved successfully!");
+        }
+    } catch (error) {
+        console.error("Error saving configuration:", error);
+        alert("Failed to save settings.");
+    }
 }
 
 // Run init when page loads
