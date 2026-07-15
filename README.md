@@ -74,4 +74,3 @@ python -m unittest tests/test_app.py
 ## 👥 Contributors
 
 - **Dushyanth136** - Core Developer & System Designer
-- **Antigravity** - Systems Extension & Test Engineer
