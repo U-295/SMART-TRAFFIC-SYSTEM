@@ -1,7 +1,8 @@
 import sqlite3
 import os
+import config
 
-DB_FILE = 'traffic.db'
+DB_FILE = config.DB_FILE
 
 def get_db_connection():
     """Helper function to establish a database connection."""
