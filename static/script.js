@@ -3,6 +3,7 @@ const numLanes = 4;
 let activeLane = 1;
 let timeRemaining = 10; // Default starting time
 let isEmergency = false;
+let isPedestrian = false;
 let simulationInterval = null;
 let trafficChart = null;
 
@@ -35,12 +36,13 @@ function init() {
             updateTimerDisplay();
             
             // Yellow light logic (last 3 seconds)
-            if (timeRemaining === 3 && !isEmergency) {
+            if (timeRemaining === 3 && !isEmergency && !isPedestrian) {
                 setYellowLight(activeLane);
             }
         } else {
             // Time is up, switch to next lane
             isEmergency = false; // Reset emergency state when time is up
+            isPedestrian = false;
             switchToNextLane();
         }
     }, 1000);
@@ -73,11 +75,18 @@ function updateTimerDisplay() {
     for (let i = 1; i <= numLanes; i++) {
         const timerEl = document.getElementById(`timer-${i}`);
         if (i === activeLane) {
-            timerEl.textContent = timeRemaining.toString().padStart(2, '0');
+            if (isPedestrian) {
+                timerEl.textContent = "🚶 " + timeRemaining.toString().padStart(2, '0');
+                timerEl.style.color = '#10b981';
+            } else {
+                timerEl.textContent = timeRemaining.toString().padStart(2, '0');
+            }
             
             // Text color coding
             if (isEmergency) {
                 timerEl.style.color = '#ef4444'; // Red for emergency countdown
+            } else if (isPedestrian) {
+                // Keep pedestrian walking green
             } else if (timeRemaining <= 3) {
                 timerEl.style.color = '#fbbf24'; // Yellow warning
             } else {
@@ -243,12 +252,38 @@ async function triggerEmergency(laneId) {
             activeLane = laneId;
             timeRemaining = 30; // Give emergency vehicle 30 seconds
             isEmergency = true;
+            isPedestrian = false;
             updateSignals();
             fetchEmergencyHistory();
             fetchAnalytics();
         }
     } catch (error) {
         console.error("Error triggering emergency:", error);
+    }
+}
+
+// 2.5 Trigger Pedestrian Crossing Priority
+async function requestPedestrian(laneId) {
+    try {
+        const response = await fetch('/api/pedestrian_crossing', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lane_id: laneId })
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            // Give 15 seconds pedestrian crossing window
+            activeLane = laneId;
+            timeRemaining = 15;
+            isPedestrian = true;
+            isEmergency = false;
+            updateSignals();
+            fetchAnalytics();
+        }
+    } catch (error) {
+        console.error("Error requesting pedestrian crossing:", error);
     }
 }
 
