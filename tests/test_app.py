@@ -158,5 +158,18 @@ class SmartTrafficTestCase(unittest.TestCase):
         data = json.loads(response.data)
         self.assertEqual(data['green_time'], 36)
 
+    def test_weather_logs_recorded(self):
+        """Test that weather changes are recorded in the weather_logs table."""
+        self.client.post('/api/weather', 
+                         data=json.dumps({'weather': 'Fog'}),
+                         content_type='application/json')
+        conn = database.get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT weather FROM weather_logs ORDER BY changed_at DESC LIMIT 1")
+        row = cursor.fetchone()
+        self.assertIsNotNone(row)
+        self.assertEqual(row['weather'], 'Fog')
+        conn.close()
+
 if __name__ == '__main__':
     unittest.main()
