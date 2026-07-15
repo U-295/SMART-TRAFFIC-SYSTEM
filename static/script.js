@@ -69,6 +69,9 @@ function init() {
         });
     });
 
+    // Initial config load
+    fetchConfiguration();
+
     // Initial logs load
     fetchFilteredLogs();
 }
@@ -574,6 +577,56 @@ function exportLogsCSV() {
     if (density) url += `density=${density}&`;
     
     window.location.href = url;
+}
+
+async function fetchConfiguration() {
+    try {
+        const response = await fetch('/api/config');
+        const config = await response.json();
+        
+        const thLowInput = document.getElementById('cfg-th-low');
+        const thMedInput = document.getElementById('cfg-th-med');
+        const gtLowInput = document.getElementById('cfg-gt-low');
+        const gtMedInput = document.getElementById('cfg-gt-med');
+        const gtHighInput = document.getElementById('cfg-gt-high');
+        
+        if (thLowInput) thLowInput.value = config.threshold_low;
+        if (thMedInput) thMedInput.value = config.threshold_medium;
+        if (gtLowInput) gtLowInput.value = config.green_time_low;
+        if (gtMedInput) gtMedInput.value = config.green_time_medium;
+        if (gtHighInput) gtHighInput.value = config.green_time_high;
+    } catch (error) {
+        console.error("Error fetching configuration:", error);
+    }
+}
+
+async function saveConfiguration() {
+    const threshold_low = document.getElementById('cfg-th-low').value;
+    const threshold_medium = document.getElementById('cfg-th-med').value;
+    const green_time_low = document.getElementById('cfg-gt-low').value;
+    const green_time_medium = document.getElementById('cfg-gt-med').value;
+    const green_time_high = document.getElementById('cfg-gt-high').value;
+    
+    try {
+        const response = await fetch('/api/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                threshold_low,
+                threshold_medium,
+                green_time_low,
+                green_time_medium,
+                green_time_high
+            })
+        });
+        const data = await response.json();
+        if (data.status === 'success') {
+            alert("Settings saved successfully!");
+        }
+    } catch (error) {
+        console.error("Error saving configuration:", error);
+        alert("Failed to save settings.");
+    }
 }
 
 // Run init when page loads
