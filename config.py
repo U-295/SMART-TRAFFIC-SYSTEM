@@ -1,3 +1,6 @@
+# Configuration Manager for Smart Traffic Management System
+# Contains database settings, default timings, thresholds, and multipliers.
+
 import os
 
 # Database Configuration
