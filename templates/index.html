@@ -304,7 +304,10 @@
                 
                 <div class="glass-card logs-search-card" style="margin-top: 20px;">
                     <div class="card-header" style="flex-wrap: wrap; gap: 10px;">
-                        <h3>Detailed Logs Viewer</h3>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <h3>Detailed Logs Viewer</h3>
+                            <button onclick="fetchFilteredLogs()" class="btn-pedestrian" style="padding: 4px 8px; font-size: 0.7rem; border-radius: 4px; border-color: rgba(255, 255, 255, 0.1); color: var(--text-muted); cursor: pointer;" title="Refresh Logs">🔄</button>
+                        </div>
                         <div class="filter-controls" style="display: flex; gap: 8px; align-items: center;">
                             <select id="filter-lane" onchange="fetchFilteredLogs()" class="filter-select">
                                 <option value="">All Lanes</option>
