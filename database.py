@@ -245,3 +245,37 @@ def add_pedestrian_request(lane_id):
         finally:
             conn.close()
     return False
+
+def get_filtered_logs(lane_id=None, density=None, limit=100):
+    """Fetches traffic logs with filters for lane and density level."""
+    conn = get_db_connection()
+    logs = []
+    if conn:
+        try:
+            cursor = conn.cursor()
+            query = """
+                SELECT t.id, t.vehicle_count, t.density_level, t.green_time, 
+                       datetime(t.recorded_at, 'localtime') as recorded_at, l.name as lane_name
+                FROM traffic_logs t
+                JOIN lanes l ON t.lane_id = l.id
+                WHERE 1=1
+            """
+            params = []
+            if lane_id:
+                query += " AND t.lane_id = ?"
+                params.append(lane_id)
+            if density:
+                query += " AND t.density_level = ?"
+                params.append(density)
+            
+            query += " ORDER BY t.recorded_at DESC LIMIT ?"
+            params.append(limit)
+            
+            cursor.execute(query, params)
+            rows = cursor.fetchall()
+            logs = [dict(row) for row in rows]
+        except Exception as e:
+            print(f"Error filtering logs: {e}")
+        finally:
+            conn.close()
+    return logs
