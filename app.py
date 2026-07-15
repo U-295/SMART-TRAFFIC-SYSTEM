@@ -1,5 +1,7 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, Response
 from datetime import datetime
+import csv
+import io
 import database
 import config
 
@@ -116,6 +118,37 @@ def get_logs():
     
     logs = database.get_filtered_logs(lane_id=lane_id, density=density, limit=limit)
     return jsonify(logs)
+
+@app.route('/api/logs/export', methods=['GET'])
+def export_logs():
+    """
+    Exports traffic logs to CSV format.
+    """
+    lane_id = request.args.get('lane_id', type=int)
+    density = request.args.get('density')
+    
+    logs = database.get_filtered_logs(lane_id=lane_id, density=density, limit=1000)
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['Log ID', 'Lane Name', 'Vehicle Count', 'Density Level', 'Green Time (s)', 'Recorded At'])
+    
+    for log in logs:
+        writer.writerow([
+            log['id'],
+            log['lane_name'],
+            log['vehicle_count'],
+            log['density_level'],
+            log['green_time'],
+            log['recorded_at']
+        ])
+    
+    output.seek(0)
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-disposition": "attachment; filename=traffic_logs_export.csv"}
+    )
 
 if __name__ == '__main__':
     database.init_db()
