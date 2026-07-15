@@ -68,6 +68,9 @@ function init() {
             changeWeather(selectedWeather);
         });
     });
+
+    // Initial logs load
+    fetchFilteredLogs();
 }
 
 // Update the visual timer for all lanes
@@ -511,6 +514,53 @@ function updateChartData(hourlyData) {
     trafficChart.data.labels = labels;
     trafficChart.data.datasets[0].data = values;
     trafficChart.update();
+}
+
+// Fetch logs with current filters applied
+async function fetchFilteredLogs() {
+    const laneSelect = document.getElementById('filter-lane');
+    const densitySelect = document.getElementById('filter-density');
+    
+    // Check if element exists before accessing values (useful during tests)
+    const laneId = laneSelect ? laneSelect.value : '';
+    const density = densitySelect ? densitySelect.value : '';
+    
+    let url = '/api/logs?limit=50';
+    if (laneId) url += `&lane_id=${laneId}`;
+    if (density) url += `&density=${density}`;
+    
+    try {
+        const response = await fetch(url);
+        const logs = await response.json();
+        
+        const tbody = document.getElementById('filtered-logs-body');
+        if (!tbody) return; // Exit if tbody isn't loaded yet
+        
+        tbody.innerHTML = '';
+        
+        if (logs && logs.length > 0) {
+            logs.forEach(log => {
+                const tr = document.createElement('tr');
+                let densityColor = '#64748b';
+                if (log.density_level === 'Low') densityColor = '#10b981';
+                else if (log.density_level === 'Medium') densityColor = '#fbbf24';
+                else if (log.density_level === 'High') densityColor = '#ef4444';
+                
+                tr.innerHTML = `
+                    <td><strong>${log.lane_name}</strong></td>
+                    <td>${log.vehicle_count}</td>
+                    <td><span style="color: ${densityColor}; font-weight: 600;">${log.density_level}</span></td>
+                    <td>${log.green_time}s</td>
+                    <td>${log.recorded_at}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } else {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No logs found matching filters.</td></tr>`;
+        }
+    } catch (error) {
+        console.error("Error fetching filtered logs:", error);
+    }
 }
 
 // Run init when page loads
