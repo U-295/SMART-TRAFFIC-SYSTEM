@@ -134,5 +134,17 @@ class SmartTrafficTestCase(unittest.TestCase):
         self.assertEqual(data['threshold_low'], 15)
         self.assertEqual(data['green_time_high'], 28)
 
+    def test_weather_multiplier_rain(self):
+        """Test that weather 'Rain' correctly multiplies low green time."""
+        self.client.post('/api/weather', 
+                         data=json.dumps({'weather': 'Rain'}),
+                         content_type='application/json')
+        response = self.client.post('/api/update_density', 
+                                    data=json.dumps({'lane_id': 1, 'vehicle_count': 15}),
+                                    content_type='application/json')
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(data['green_time'], 15)
+
 if __name__ == '__main__':
     unittest.main()
