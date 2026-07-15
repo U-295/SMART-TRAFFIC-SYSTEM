@@ -105,6 +105,18 @@ def trigger_pedestrian_crossing():
     database.add_pedestrian_request(lane_id)
     return jsonify({'status': 'success', 'message': f'Pedestrian crossing requested for lane {lane_id}'})
 
+@app.route('/api/logs', methods=['GET'])
+def get_logs():
+    """
+    Fetches traffic logs with filters for lane and density level.
+    """
+    lane_id = request.args.get('lane_id', type=int)
+    density = request.args.get('density')
+    limit = request.args.get('limit', default=50, type=int)
+    
+    logs = database.get_filtered_logs(lane_id=lane_id, density=density, limit=limit)
+    return jsonify(logs)
+
 if __name__ == '__main__':
     database.init_db()
     app.run(debug=True)
