@@ -56,6 +56,8 @@ def init_db():
         FOREIGN KEY (lane_id) REFERENCES lanes(id)
     )
     """)
+    
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_pedestrian_lane ON pedestrian_requests(lane_id)")
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS weather_logs (
